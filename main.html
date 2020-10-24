@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.5/redux.min.js"></script>
 </head>
 <body>
     <div id="Subject"></div>
-    <div id="TOC"></div>
+    <div id="Toc"></div>
     <div id="Control"></div>
     <div id="Content"></div>
-    
+
     <script>
         function subject() {
             document.querySelector('#Subject').innerHTML = `
@@ -21,32 +22,173 @@
             `;
         }
         function TOC() {
-            document.querySelector('#TOC').innerHTML = `
+            var state = store.getState();
+            var navElem = '';
+            for (var i = 0; i < state.contents.length; i++) {
+                navElem = navElem + `
+                    <li>
+                        <a href="${state.contents[i].id}"
+                        onclick="
+                            event.preventDefault();
+                            var action = {
+                                type: 'NAVIGATION', 
+                                id: ${state.contents[i].id}
+                            }
+                            store.dispatch(action);
+                        ">
+                            ${state.contents[i].title}
+                        </a>
+                    </li>
+                `;
+            }
+            document.querySelector('#Toc').innerHTML = `
             <nav>
                 <ol>
-                    <li><a href="1.html">HTML</a></li>
-                    <li><a href="2.css">CSS</a></li>
+                    ${navElem}
                 </ol>
             </nav>
             `;
         }
+
         function Control() {
             document.querySelector('#Control').innerHTML = `
             <ul>
-                <li><button>create</button></li>
-                <li><button>delete</button></li>
+                <li><button onclick="
+                    event.preventDefault();
+                    store.dispatch({
+                        type: 'CHANGE_MODE',
+                        mode: 'create'
+                    })
+                    ">
+                    create
+                    </button>
+                </li>
+                <li><button
+                    onclick="
+                    store.dispatch({
+                        type: 'DELETE'
+                    });
+                    "
+                    >delete</button></li>
             </ul>
                 `;
         }
 
         function Content() {
-            document.querySelector('#Content').innerHTML = `
-            <article>
-                <h2>HTML</h2>
-                HTML is ... 
-            </article>
+            var state = store.getState();
+            if (state.mode === 'create') {
+                document.querySelector('#Content').innerHTML = `
+                <article>
+                    <form onsubmit="
+                        event.preventDefault();
+                        var _title = this.title.value;
+                        var _desc = this.desc.value;
+                        store.dispatch({
+                            type: 'CREATE',
+                            title: _title,
+                            desc: _desc
+                        })
+                    ">
+                        <p>
+                            <input type="text" name="title" placeholder="Title" />
+                        </p>
+                        <p>
+                            <textarea name="desc" placeholder="Description"></textarea>
+                        </p>
+                        <p>
+                            <input type="submit" />
+                        </p>
+                    </form>
+                </article>
                 `;
+            }
+
+            if (state.mode === 'read') {
+                var aTitle; 
+                var aDesc;
+
+                for (var i = 0; i < state.contents.length; i++) {
+                    if (state.contents[i].id === state.navigation_id) {
+                        aTitle = state.contents[i].title;
+                        aDesc = state.contents[i].desc
+                        break;
+                    }
+                }
+                document.querySelector('#Content').innerHTML = `
+                <article>
+                    <h2>${aTitle}</h2>
+                    ${aDesc} 
+                </article>
+                `;
+            }
+
+            if (state.mode === 'welcome') {
+                document.querySelector('#Content').innerHTML = `
+                <article>
+                    <h2>Welcome!</h2>
+                    Hello, Redux!
+                </article>
+                `;
+            }
         }
+
+        function reducer(state, action) {
+            if (state === undefined) {
+                return {
+                    max_id: 2,
+                    mode: 'welcome',
+                    navigation_id: 2,
+                    contents: [
+                        {id: 1, title: 'HTML',  desc: 'HTML is ...'},
+                        {id: 2, title: 'CSS', desc: 'CSS is ... '}
+                    ]
+                }
+            }
+
+            var newState;
+            if (action.type === 'NAVIGATION') {
+                newState = Object.assign(
+                    {}, 
+                    state, 
+                    {navigation_id: action.id, mode: 'read'});
+            } else if (action.type === "CREATE") {
+                var newMaxId = state.max_id + 1;
+                var newContents = state.contents.concat();
+                newContents.push({
+                    id: newMaxId,
+                    title: action.title, 
+                    desc: action.desc,
+                });
+                newState = Object.assign({}, state, {
+                    max_id: newMaxId,
+                    contents: newContents,
+                    mode: 'read'
+                });
+            } else if (action.type === "CHANGE_MODE") {
+                newState = Object.assign({}, state, {
+                    mode: action.mode
+                });
+            } else if (action.type === "DELETE") {
+                var newContents = [];
+                for (var index = 0; index < state.contents.length; index++) {
+                    if (state.navigation_id !== state.contents[index].id) {
+                        newContents.push(
+                            state.contents[index]
+                        );
+                    }
+                }
+                newState = Object.assign({}, state, {
+                    contents: newContents,
+                    mode: 'welcome'
+                })
+            }
+            console.log(action, state, newState);
+            return newState;
+        }
+
+        var store = Redux.createStore(reducer);
+        store.subscribe(Content);
+        store.subscribe(TOC);
 
         subject();
         TOC();
