@@ -70,6 +70,14 @@
                     });
                     "
                     >delete</button></li>
+                <li><button
+                onclick="
+                store.dispatch({
+                    type: 'CHANGE_MODE',
+                    mode: 'update'
+                });
+                "
+                >update</button></li>
             </ul>
                 `;
         }
@@ -94,6 +102,45 @@
                         </p>
                         <p>
                             <textarea name="desc" placeholder="Description"></textarea>
+                        </p>
+                        <p>
+                            <input type="submit" />
+                        </p>
+                    </form>
+                </article>
+                `;
+            }
+
+            if (state.mode === 'update') {
+                var updateId
+                var updateTitle;
+                var updateDesc;
+                for (var i = 0; i < state.contents.length; i++) {
+                    if (state.contents[i].id === state.navigation_id) {
+                        updateId = state.contents[i].id;
+                        updateTitle = state.contents[i].title;
+                        updateDesc = state.contents[i].desc;
+                    }
+                }
+                document.querySelector('#Content').innerHTML = `
+                <article>
+                    <form onsubmit="
+                        event.preventDefault();
+                        var _id = ${updateId};
+                        var _title = this.title.value;
+                        var _desc = this.desc.value;
+                        store.dispatch({
+                            type: 'UPDATE',
+                            id: _id,
+                            title: _title,
+                            desc: _desc
+                        })
+                    ">
+                        <p>
+                            <input type="text" name="title" placeholder="Title" value=${updateTitle} />
+                        </p>
+                        <p>
+                            <textarea name="desc" placeholder="Description">${updateDesc}</textarea>
                         </p>
                         <p>
                             <input type="submit" />
@@ -151,6 +198,10 @@
                     {}, 
                     state, 
                     {navigation_id: action.id, mode: 'read'});
+            } else if (action.type === "CHANGE_MODE") {
+                newState = Object.assign({}, state, {
+                    mode: action.mode
+                });
             } else if (action.type === "CREATE") {
                 var newMaxId = state.max_id + 1;
                 var newContents = state.contents.concat();
@@ -161,19 +212,32 @@
                 });
                 newState = Object.assign({}, state, {
                     max_id: newMaxId,
+                    navigation_id: newMaxId,
                     contents: newContents,
                     mode: 'read'
                 });
-            } else if (action.type === "CHANGE_MODE") {
+            } else if (action.type === "UPDATE") {
+                var updateContents = Array.from(state.contents);
+                for (let i = 0; i < updateContents.length; i++) {
+                    
+                    if (state.navigation_id === updateContents[i].id) {
+                        updateContents[i] = {
+                            id: action.id,
+                            title: action.title,
+                            desc: action.desc
+                        }
+                    }
+                }
                 newState = Object.assign({}, state, {
-                    mode: action.mode
+                    contents: updateContents,
+                    mode: 'read'
                 });
             } else if (action.type === "DELETE") {
                 var newContents = [];
-                for (var index = 0; index < state.contents.length; index++) {
-                    if (state.navigation_id !== state.contents[index].id) {
+                for (var i = 0; i < state.contents.length; i++) {
+                    if (state.navigation_id !== state.contents[i].id) {
                         newContents.push(
-                            state.contents[index]
+                            state.contents[i]
                         );
                     }
                 }
@@ -182,7 +246,6 @@
                     mode: 'welcome'
                 })
             }
-            console.log(action, state, newState);
             return newState;
         }
 
