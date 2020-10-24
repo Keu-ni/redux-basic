@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="Subject"></div>
+    <div id="TOC"></div>
+    <div id="Control"></div>
+    <div id="Content"></div>
+    
+    <script>
+        function subject() {
+            document.querySelector('#Subject').innerHTML = `
+            <header>
+                <h1>WEB</h1>
+                Hello. WEB!
+            </header>
+            `;
+        }
+        function TOC() {
+            document.querySelector('#TOC').innerHTML = `
+            <nav>
+                <ol>
+                    <li><a href="1.html">HTML</a></li>
+                    <li><a href="2.css">CSS</a></li>
+                </ol>
+            </nav>
+            `;
+        }
+        function Control() {
+            document.querySelector('#Control').innerHTML = `
+            <ul>
+                <li><button>create</button></li>
+                <li><button>delete</button></li>
+            </ul>
+                `;
+        }
+
+        function Content() {
+            document.querySelector('#Content').innerHTML = `
+            <article>
+                <h2>HTML</h2>
+                HTML is ... 
+            </article>
+                `;
+        }
+
+        subject();
+        TOC();
+        Control();
+        Content();
+    </script>
+</body>
+</html>
